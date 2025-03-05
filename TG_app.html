@@ -59,13 +59,24 @@
                 overallmood: overallmood
             };
 
-            // Відправка даних в Telegram
-            Telegram.WebApp.sendData(JSON.stringify(data));
-
-            // Закрити Web App після надсилання даних
-            Telegram.WebApp.close();
+            // Відправка даних на сервер
+            fetch("https://your-server.com/update-google-sheet", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Дані успішно відправлені!");
+                // Закрити Web App після надсилання даних
+                Telegram.WebApp.close();
+            })
+            .catch(error => {
+                alert("Помилка при відправці даних.");
+            });
         }
     </script>
 </body>
 </html>
-
