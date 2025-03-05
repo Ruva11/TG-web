@@ -7,31 +7,60 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <h1>Введіть дані</h1>
-    <label for="category">Категорія:</label>
-    <input type="text" id="category" placeholder="Введіть категорію" required>
+    <h1>Введіть ваші дані</h1>
+    <label for="bedtime">Час засинання:</label>
+    <input type="time" id="bedtime" required>
     <br><br>
-    <label for="amount">Сума:</label>
-    <input type="number" id="amount" placeholder="Введіть суму" required>
+    <label for="wakeuptime">Час підйому:</label>
+    <input type="time" id="wakeuptime" required>
+    <br><br>
+    <label for="steps">Кількість пройдених кроків:</label>
+    <input type="number" id="steps" required>
+    <br><br>
+    <label for="taskperformance">Результативність виконаних завдань:</label>
+    <input type="number" id="taskperformance" min="1" max="10" required>
+    <br><br>
+    <label for="morningmood">Настрій зранку (1-10):</label>
+    <input type="number" id="morningmood" min="1" max="10" required>
+    <br><br>
+    <label for="eveningmood">Настрій ввечері (1-10):</label>
+    <input type="number" id="eveningmood" min="1" max="10" required>
+    <br><br>
+    <label for="overallmood">Настрій загалом протягом дня (1-10):</label>
+    <input type="number" id="overallmood" min="1" max="10" required>
     <br><br>
     <button onclick="sendData()">Надіслати</button>
 
     <script>
         function sendData() {
-            const category = document.getElementById('category').value;
-            const amount = document.getElementById('amount').value;
+            const bedtime = document.getElementById('bedtime').value;
+            const wakeuptime = document.getElementById('wakeuptime').value;
+            const steps = document.getElementById('steps').value;
+            const taskperformance = document.getElementById('taskperformance').value;
+            const morningmood = document.getElementById('morningmood').value;
+            const eveningmood = document.getElementById('eveningmood').value;
+            const overallmood = document.getElementById('overallmood').value;
 
             // Перевірка на порожні значення
-            if (!category || !amount) {
+            if (!bedtime || !wakeuptime || !steps || !taskperformance || !morningmood || !eveningmood || !overallmood) {
                 alert("Будь ласка, заповніть усі поля.");
                 return;
             }
 
+            // Створення об'єкта з даними
+            const data = {
+                datetime: new Date().toLocaleString(), // автоматична дата та час
+                bedtime: bedtime,
+                wakeuptime: wakeuptime,
+                steps: steps,
+                taskperformance: taskperformance,
+                morningmood: morningmood,
+                eveningmood: eveningmood,
+                overallmood: overallmood
+            };
+
             // Відправка даних в Telegram
-            Telegram.WebApp.sendData(JSON.stringify({
-                category: category,
-                amount: amount
-            }));
+            Telegram.WebApp.sendData(JSON.stringify(data));
 
             // Закрити Web App після надсилання даних
             Telegram.WebApp.close();
@@ -39,3 +68,4 @@
     </script>
 </body>
 </html>
+
