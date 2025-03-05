@@ -1,57 +1,54 @@
+import logging
 import os
-import pickle
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-# Якщо змінити доступ, потрібно видалити файл token.pickle
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+# Налаштування для Google Sheets API
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("path/to/your/credentials.json", scope)
+client = gspread.authorize(creds)
+sheet = client.open("Your Google Sheets Name").sheet1
 
-# Авторизація через OAuth 2.0
-def authenticate():
-    creds = None
-    # Файл token.pickle зберігає доступ до токенів користувача
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
+# Функція для обробки даних
+def process_data(data):
+    try:
+        # Парсимо отримані дані
+        data = json.loads(data)
+        # Отримуємо поточний час
+        current_time = data.get("datetime")
+        bedtime = data.get("bedtime")
+        wakeuptime = data.get("wakeuptime")
+        steps = data.get("steps")
+        taskperformance = data.get("taskperformance")
+        morningmood = data.get("morningmood")
+        eveningmood = data.get("eveningmood")
+        overallmood = data.get("overallmood")
 
-    # Якщо немає валідних облікових даних, користувач має пройти процес авторизації
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
+        # Записуємо дані в таблицю
+        sheet.append_row([current_time, bedtime, wakeuptime, steps, taskperformance, morningmood, eveningmood, overallmood])
+    except Exception as e:
+        logging.error(f"Error processing data: {e}")
 
-        # Зберігаємо облікові дані для подальших запитів
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+# Функція для обробки команди /start
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text("Привіт! Введіть ваші дані через веб-додаток.")
 
-    return build('sheets', 'v4', credentials=creds)
+# Основна функція для запуску бота
+def main():
+    updater = Updater("YOUR TELEGRAM BOT TOKEN", use_context=True)
+    dispatcher = updater.dispatcher
 
-# Функція для запису даних в таблицю Google Sheets
-def append_to_sheet(spreadsheet_id, range_name, values):
-    service = authenticate()
+    # Реєструємо команду /start
+    dispatcher.add_handler(CommandHandler("start", start))
 
-    # Формат даних для додавання до таблиці
-    body = {
-        'values': values
-    }
+    # Обробляємо отримані дані
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, process_data))
 
-    # Додаємо нові рядки в таблицю
-    service.spreadsheets().values().append(
-        spreadsheetId=spreadsheet_id,
-        range=range_name,
-        valueInputOption="RAW",
-        body=body
-    ).execute()
+    # Запускаємо бота
+    updater.start_polling()
+    updater.idle()
 
-# Приклад виклику функції
-spreadsheet_id = '16RcTCes8HywiOofiQpEed09o3KQCRORq1_841BCcMws'  # ID твоєї таблиці
-range_name = 'Лист1!A2:C2'  # Вибір діапазону, куди будуть записані дані
-values = [
-    ['2025-03-05', 'Параметр 1', 'Параметр 2']
-]
-
-append_to_sheet(spreadsheet_id, range_name, values)
+if __name__ == '__main__':
+    main()
