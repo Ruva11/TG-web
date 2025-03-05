@@ -9,3 +9,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Відкриваємо порт 80
 EXPOSE 80
+
